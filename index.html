@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>نوآوران | طراحی و دوخت لباس مجلسی</title>
+<!--
+  Landing page for an evening-dress design studio: light spotlight hero with a colour picker,
+  Persian (RTL) copy, vanilla CSS + JS.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..900&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300..900&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  :root{
+    --bg:#0b0b0c; --ink:#f2f2f0; --muted:rgba(242,242,240,.62); --line:rgba(242,242,240,.14);
+    --accent:#cdeb5b;   /* single accent, locked */
+    --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  body{overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  button,input{font:inherit;color:inherit}
+  .wrap{max-width:1400px;margin:0 auto;padding:0 clamp(20px,4vw,48px)}
+  .mono{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+  /* ---------- HEADER ---------- */
+  .hdr{position:fixed;inset:0 0 auto 0;z-index:50;transition:background .4s var(--ease),border-color .4s var(--ease),backdrop-filter .4s;
+       border-bottom:1px solid transparent}
+  .hdr:not(.scrolled){--ink:#111;--muted:rgba(17,17,17,.62);--line:rgba(17,17,17,.14);color:#111}
+  .hdr:not(.scrolled) .icon-btn:hover{background:rgba(17,17,17,.06)}
+  .hdr.scrolled{background:rgba(11,11,12,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:var(--line)}
+  .hdr .wrap{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:32px;height:72px}
+  .brand{display:flex;align-items:baseline;gap:10px;font-weight:800;letter-spacing:-.03em;font-size:20px}
+  .brand small{font-family:var(--mono);font-weight:400;font-size:10px;letter-spacing:.14em;color:var(--muted)}
+  .nav{display:flex;gap:28px;font-size:14px}
+  .nav a{position:relative;color:var(--muted);transition:color .25s}
+  .nav a:hover,.nav a[aria-current]{color:var(--ink)}
+  .nav a::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:1px;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
+  .nav a:hover::after,.nav a[aria-current]::after{transform:scaleX(1)}
+  .actions{display:flex;align-items:center;gap:6px}
+  .icon-btn{width:40px;height:40px;border-radius:999px;display:grid;place-items:center;background:transparent;border:1px solid transparent;cursor:pointer;font-size:19px;position:relative;transition:background .2s,border-color .2s,transform .15s}
+  .icon-btn:hover{background:rgba(242,242,240,.08);border-color:var(--line)}
+  .icon-btn:active{transform:scale(.96)}
+  .badge{position:absolute;top:6px;right:5px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--accent);color:#0b0b0c;font-size:10px;font-weight:700;display:grid;place-items:center}
+  .pill{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 22px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid transparent;transition:transform .15s,background .25s,color .25s,border-color .25s}
+  .pill:active{transform:translateY(1px) scale(.98)}
+  .pill.solid{background:var(--accent);color:#0b0b0c}
+  .pill.solid:hover{background:#dbf57a}
+  .pill.ghost{background:rgba(11,11,12,.35);border-color:rgba(242,242,240,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .pill.ghost:hover{border-color:var(--ink)}
+  .menu-btn{display:none}
+  .mobile-nav{display:none}
+  @media (max-width:900px){
+    .nav,.actions .pill{display:none}
+    .menu-btn{display:grid}
+    .hdr .wrap{grid-template-columns:1fr auto}
+    .mobile-nav{position:fixed;inset:72px 0 0 0;z-index:49;background:rgba(11,11,12,.96);padding:32px clamp(20px,4vw,48px);
+      display:grid;align-content:start;gap:4px;transform:translateY(-8px);opacity:0;pointer-events:none;transition:.35s var(--ease)}
+    .mobile-nav.open{opacity:1;transform:none;pointer-events:auto}
+    .mobile-nav a{font-size:32px;font-weight:700;letter-spacing:-.03em;padding:10px 0;border-bottom:1px solid var(--line)}
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;min-height:100dvh;height:100dvh;overflow:hidden;background:#fefefe;cursor:none;isolation:isolate}
+  .hero .layer{position:absolute;left:0;right:0;top:72px;bottom:0;width:100%;height:calc(100% - 72px);object-fit:contain;object-position:center;pointer-events:none;user-select:none;-webkit-user-drag:none}
+  .reveal{position:absolute;inset:0;z-index:2;pointer-events:none}
+  .reveal img{transition:opacity .6s var(--ease)}
+  .reveal img:not(.on){opacity:0}
+  .ring{position:absolute;left:0;top:0;z-index:6;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:999px;border:1.5px solid #111;pointer-events:none;opacity:0;transition:opacity .3s}
+
+  .hero-ui{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .hero-ui .wrap{height:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:32px;padding-bottom:clamp(28px,6vh,64px)}
+  .copy{max-width:560px}
+  .copy .mono{color:var(--muted);display:flex;gap:14px;align-items:center}
+  .copy .mono::before{content:"";width:28px;height:1px;background:var(--accent)}
+  .copy h1{margin-top:18px;font-size:clamp(44px,7vw,104px);font-weight:800;letter-spacing:-.045em;line-height:.92}
+  .copy h1 em{font-style:italic;font-weight:300;display:inline-block;padding-bottom:4px;line-height:1.1}
+  .copy p{margin-top:18px;max-width:42ch;color:var(--muted);line-height:1.6;font-size:15px}
+  .ctas{margin-top:26px;display:flex;gap:10px;pointer-events:auto}
+
+  .picker{pointer-events:auto;width:260px;border-top:1px solid var(--line);padding-top:16px}
+  .picker .mono{color:var(--muted);display:flex;justify-content:space-between}
+  .opts{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .opt{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;height:52px;padding:0 16px 0 8px;border-radius:999px;
+       background:rgba(11,11,12,.38);border:1px solid var(--line);cursor:pointer;text-align:left;
+       backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:border-color .25s,background .25s,transform .15s}
+  .opt:hover{border-color:rgba(242,242,240,.4)}
+  .opt:active{transform:scale(.98)}
+  .opt[aria-checked="true"]{border-color:var(--accent);background:rgba(11,11,12,.6)}
+  .opt .sw{width:36px;height:36px;border-radius:999px;background-size:cover;background-position:58% 45%;border:1px solid var(--line)}
+  .opt b{font-weight:600;font-size:14px}
+  .opt .k{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em}
+  .opt[aria-checked="true"] .k{color:var(--accent)}
+  /* picker on the light hero */
+  .picker{--ink:#111;--muted:rgba(17,17,17,.6);--line:rgba(17,17,17,.16);grid-column:2;justify-self:end;color:#111;width:330px}
+  .picker .mono{letter-spacing:0;text-transform:none;font-family:"Vazirmatn",var(--sans);font-size:13px;font-weight:500}
+  .picker .opt{background:rgba(255,255,255,.72);padding:0 6px 0 12px;gap:8px;min-width:0;direction:rtl}
+  .picker .opt:hover{border-color:rgba(17,17,17,.45)}
+  .picker .opt[aria-checked="true"]{border-color:#111;background:#fff}
+  .picker .opt b{font-family:"Vazirmatn",var(--sans);justify-self:start;white-space:nowrap}
+  .picker .opt .k{color:var(--muted)}
+  .picker .opt[aria-checked="true"] .k{color:#111}
+  .picker .opt .sw{background-size:300% auto;background-position:50% 30%}
+  /* hero headline */
+  .hero-ui .wrap{grid-template-rows:1fr}
+  .hero-copy{--ink:#111;--muted:rgba(17,17,17,.62);grid-column:1;grid-row:1;align-self:center;justify-self:start;padding-top:72px;color:#111;max-width:max(220px,min(460px,calc(50vw - 0.3 * (100vh - 72px) - 72px)))}
+  .picker,.mat-note{grid-row:1}
+  .hero-copy .eyebrow{display:inline-flex;align-items:center;gap:12px;font-size:14px;font-weight:700;color:rgba(17,17,17,.7)}
+  .hero-copy .eyebrow::before{content:"";width:34px;height:2px;border-radius:2px;background:linear-gradient(90deg,#e8588a,#9d0b2e)}
+  .hero-copy h1{margin-top:18px;font-size:clamp(32px,4.6vw,84px);font-weight:900;line-height:1.28;letter-spacing:0;color:#111}
+  .hero-copy h1 em{font-style:normal;display:inline-block;padding:.04em .02em .12em;
+    background:linear-gradient(100deg,#ef6a9b 0%,#cf1f52 52%,#8f0f2c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+  .hero-copy p{margin-top:16px;max-width:30ch;color:rgba(17,17,17,.66);font-size:clamp(15px,1.25vw,18px);line-height:1.95}
+  .hero-copy .ctas{margin-top:26px;display:flex;pointer-events:auto}
+  .hero-copy .cta{display:inline-flex;align-items:center;gap:12px;height:52px;padding:0 28px;border-radius:999px;background:#111;color:#fff;font-weight:700;font-size:15px;cursor:pointer;
+    transition:transform .2s var(--ease),background .25s,box-shadow .25s;box-shadow:0 10px 30px rgba(17,17,17,.18)}
+  .hero-copy .cta:hover{background:#9d0b2e;transform:translateY(-2px);box-shadow:0 14px 34px rgba(157,11,46,.28)}
+  .hero-copy .cta i{font-size:18px;transition:transform .25s var(--ease)}
+  .hero-copy .cta:hover i{transform:translateX(-4px)}
+  .hero-copy .hint2{margin-top:18px;display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(17,17,17,.5)}
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  .hero-copy>*{animation:rise .9s var(--ease) both}
+  .hero-copy>:nth-child(2){animation-delay:.08s}.hero-copy>:nth-child(3){animation-delay:.16s}
+  .hero-copy>:nth-child(4){animation-delay:.24s}.hero-copy>:nth-child(5){animation-delay:.32s}
+  @media (max-width:1180px){ .hero-copy p{display:none} }
+  /* dress / design selector (hero, top right) */
+  .designs{grid-column:2;grid-row:1;align-self:start;justify-self:end;width:330px;margin-top:88px;pointer-events:auto;cursor:auto;
+    --ink:#111;--muted:rgba(17,17,17,.6);color:#111;background:rgba(255,255,255,.74);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(17,17,17,.1);border-radius:22px;padding:14px;box-shadow:0 18px 50px rgba(17,17,17,.08)}
+  .d-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:14px}
+  .d-head b{font-weight:800}
+  .d-head span{font-size:12.5px;color:rgba(17,17,17,.55)}
+  .d-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .d-thumb{display:grid;gap:6px;padding:0;background:none;cursor:pointer;text-align:center;border:0}
+  .d-img{display:block;aspect-ratio:3/4;border-radius:12px;border:1.5px solid transparent;overflow:hidden;background:linear-gradient(160deg,var(--a),var(--b));
+    transition:transform .25s var(--ease),border-color .2s,box-shadow .25s}
+  .d-img img{width:100%;height:100%;object-fit:contain;padding:3px;display:block}
+  .d-thumb:hover .d-img{transform:translateY(-3px)}
+  .d-thumb i{font-style:normal;font-size:10.5px;white-space:nowrap;line-height:1.35;color:rgba(17,17,17,.6);transition:color .2s}
+  .d-thumb[aria-checked="true"] .d-img{border-color:#111;box-shadow:0 8px 18px rgba(17,17,17,.16)}
+  .d-thumb[aria-checked="true"] i{color:#111;font-weight:700}
+  @media (max-width:900px){
+    .designs{position:absolute;grid-column:auto;right:8px;top:150px;width:auto;margin:0;padding:6px;border-radius:30px;background:rgba(255,255,255,.82)}
+    .d-head,.d-thumb i{display:none}
+    .d-thumbs{display:flex;flex-direction:column;gap:6px}
+    .d-img{width:44px;height:58px;border-radius:22px}
+    .d-img img{padding:2px}
+  }
+  .picker .opt-wide{grid-column:1/-1}
+  .picker .sw-fabric{background-size:1100% auto;background-position:46% 82%}
+  .mat-note{grid-column:1;align-self:end;justify-self:start;display:grid;gap:6px;max-width:300px;padding-bottom:4px;
+    color:#111;font-size:14px;line-height:1.7;opacity:0;transform:translateY(8px);transition:opacity .45s var(--ease),transform .45s var(--ease);pointer-events:none}
+  .mat-note b{font-size:15px;font-weight:800;display:flex;align-items:center;gap:10px}
+  .mat-note b::before{content:"";width:22px;height:1px;background:#111}
+  .mat-note span{color:rgba(17,17,17,.68)}
+  .hero[data-mode="lens"] .mat-note{opacity:1;transform:none}
+  .hint{margin-top:14px;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+  .hint i{font-size:16px}
+  .scroll-cue{position:absolute;z-index:5;left:50%;bottom:22px;transform:translateX(-50%);color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+  .scroll-cue span{width:1px;height:28px;background:linear-gradient(var(--ink),transparent);animation:drip 2.2s var(--ease) infinite}
+  @keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+  @media (max-width:900px){
+    .hero-ui .wrap{grid-template-columns:1fr;align-content:end}
+    .picker{width:100%;grid-column:1}
+    .hero .layer{top:134px;height:calc(100% - 134px - 262px)}
+    .hero-copy{position:absolute;left:16px;right:16px;top:76px;padding-top:0;max-width:none;text-align:center;justify-self:auto}
+    .hero-copy .eyebrow,.hero-copy p,.hero-copy .ctas,.hero-copy .hint2{display:none}
+    .hero-copy h1{margin:0;font-size:32px;line-height:1.3}
+    .hero[data-mode="lens"] .hero-copy{opacity:0;transition:opacity .3s}
+    .mat-note{position:absolute;left:16px;right:16px;top:80px;display:flex;flex-wrap:wrap;justify-content:center;gap:0 10px;font-size:12px;line-height:1.6;text-align:center;max-width:none}
+    .mat-note b{font-size:12px}
+    .mat-note b::before{display:none}
+    .opts{grid-template-columns:1fr 1fr}
+    .scroll-cue{display:none}
+    .hero{cursor:auto}
+  }
+
+  /* ---------- FOOTER ---------- */
+  .ftr{border-top:1px solid var(--line);padding-top:clamp(56px,9vw,112px)}
+  .ftr-top{display:grid;grid-template-columns:1.3fr repeat(3,minmax(0,1fr));gap:48px}
+  .news h3{font-size:clamp(28px,3.2vw,44px);font-weight:700;letter-spacing:-.035em;line-height:1.02;max-width:14ch}
+  .news p{margin-top:14px;color:var(--muted);font-size:14px;line-height:1.6;max-width:40ch}
+  .field{margin-top:22px;display:grid;grid-template-columns:1fr auto;gap:6px;padding:5px;border-radius:999px;border:1px solid var(--line);max-width:420px;transition:border-color .25s}
+  .field:focus-within{border-color:rgba(242,242,240,.5)}
+  .field.err{border-color:#ff6b5b}
+  .field input{background:transparent;border:0;outline:0;padding:0 16px;font-size:14px;min-width:0}
+  .field input::placeholder{color:rgba(242,242,240,.4)}
+  .field .pill{height:40px}
+  .msg{margin-top:10px;font-size:12px;min-height:16px;color:var(--muted)}
+  .msg.err{color:#ff6b5b}.msg.ok{color:var(--accent)}
+  .col h4{color:var(--muted)}
+  .col ul{list-style:none;margin-top:18px;display:grid;gap:12px;font-size:14px}
+  .col a{transition:color .2s;color:rgba(242,242,240,.86)}
+  .col a:hover{color:var(--accent)}
+  .wordmark{margin-top:clamp(56px,8vw,96px);font-weight:900;letter-spacing:-.06em;line-height:.78;font-size:clamp(48px,12.4vw,200px);
+    color:transparent;-webkit-text-stroke:1px rgba(242,242,240,.22);user-select:none;white-space:nowrap;overflow:hidden}
+  .ftr-bot{border-top:1px solid var(--line);margin-top:24px;padding:22px 0 28px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;color:var(--muted)}
+  .ftr-bot .social{display:flex;gap:4px;justify-self:center}
+  .ftr-bot .legal{display:flex;gap:22px;justify-self:end}
+  .ftr-bot a:hover{color:var(--ink)}
+  @media (max-width:900px){
+    .ftr-top{grid-template-columns:1fr 1fr}
+    .news{grid-column:1/-1}
+    .ftr-bot{grid-template-columns:1fr;justify-items:start}
+    .ftr-bot .social,.ftr-bot .legal{justify-self:start}
+  }
+
+  /* ---------- STATEMENT + PRODUCTS (RTL) ---------- */
+  .fa{font-family:"Vazirmatn",var(--sans);direction:rtl}
+  .fa-num{font-family:"Vazirmatn",var(--sans)}
+  .statement{padding:clamp(80px,12vw,150px) 0 clamp(40px,6vw,72px);text-align:center;border-bottom:1px solid var(--line)}
+  .statement svg{width:clamp(96px,12vw,150px);height:auto;fill:var(--ink);display:block;margin:0 auto}
+  .statement h2{margin:28px auto 0;max-width:20ch;font-size:clamp(30px,4.6vw,64px);font-weight:900;letter-spacing:-.01em;line-height:1.3}
+  .statement h2 em{font-style:normal;color:var(--accent)}
+  .statement p{margin:18px auto 0;max-width:48ch;color:var(--muted);font-size:clamp(14px,1.2vw,16px);line-height:1.9}
+  .trust{margin-top:28px;display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
+  .trust span{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line);font-size:13px;color:rgba(242,242,240,.86)}
+  .trust i{font-size:16px;color:var(--accent)}
+
+  .products{padding:clamp(48px,7vw,88px) 0 clamp(80px,10vw,128px)}
+  .p-head{display:grid;grid-template-columns:1fr auto;align-items:end;gap:20px;margin-bottom:28px}
+  .p-head h3{font-size:clamp(24px,2.6vw,36px);font-weight:800}
+  .p-head small{display:block;margin-top:8px;color:var(--muted);font-size:14px;font-weight:400}
+  .p-nav{display:flex;align-items:center;gap:8px;direction:ltr}
+  .p-nav .count{font-family:"Vazirmatn",var(--sans);color:var(--muted);font-size:13px;min-width:52px;text-align:center}
+  .p-nav .icon-btn{border-color:var(--line)}
+  .p-nav .icon-btn:disabled{opacity:.3;cursor:default;background:transparent}
+  .track{--gap:20px;display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 2 * var(--gap)) / 3);gap:var(--gap);
+         overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain}
+  .track::-webkit-scrollbar{display:none}
+  .card{scroll-snap-align:start;display:block}
+  .card .ph-img{aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#fefefe;position:relative}
+  .card .ph-img img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .7s var(--ease)}
+  .card:hover .ph-img img{transform:scale(1.045)}
+  .card .tag{position:absolute;top:12px;right:12px;height:28px;padding:0 12px;border-radius:999px;background:rgba(11,11,12,.78);color:#f2f2f0;
+             backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:12px;display:inline-flex;align-items:center}
+  .card .meta{display:grid;grid-template-columns:1fr auto;align-items:start;gap:12px;padding:16px 2px 0}
+  .card h4{font-size:16px;font-weight:700}
+  .card .clr{display:block;margin-top:4px;color:var(--muted);font-size:13px;font-weight:400}
+  .card .price{font-size:16px;font-weight:800;white-space:nowrap}
+  .card .price small{font-size:12px;font-weight:400;color:var(--muted);margin-right:4px}
+  @media (max-width:900px){ .track{grid-auto-columns:calc((100% - var(--gap)) / 2)} }
+  @media (max-width:560px){ .track{--gap:14px;grid-auto-columns:82%} .p-head{grid-template-columns:1fr} }
+
+  .contact{display:grid;gap:12px;margin-top:18px;font-size:14px}
+  .contact a{display:inline-flex;align-items:center;gap:10px}
+  .contact i{font-size:18px;color:var(--accent)}
+  .brand{justify-self:start;align-items:center;gap:12px;letter-spacing:0;font-size:22px;font-family:"Vazirmatn",var(--sans)}
+  .brand-mark{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ef6a9b,#9d0b2e);color:#fff;font-size:21px;font-weight:900;line-height:1;padding-bottom:3px}
+  .wordmark{font-family:"Vazirmatn",var(--sans);letter-spacing:0;line-height:1.25;text-align:center;font-size:clamp(64px,17vw,280px)}
+  .contact span{color:rgba(242,242,240,.7);line-height:1.8}
+  /* Persian typography: no letter-spacing / uppercase (it breaks joined letters) */
+  .nav,.mobile-nav{direction:rtl;font-family:"Vazirmatn",var(--sans)}
+  .nav a,.mobile-nav a{letter-spacing:0}
+  .news h3{letter-spacing:0;line-height:1.4;max-width:20ch;font-size:clamp(24px,2.6vw,36px)}
+  .news p{line-height:1.9}
+  .col h4.mono,.ftr-bot{letter-spacing:0;text-transform:none;font-family:"Vazirmatn",var(--sans);font-size:13px}
+  .field input{font-family:"Vazirmatn",var(--sans)}
+  .field .pill{font-family:"Vazirmatn",var(--sans)}
+  .p-head h3,.card h4{letter-spacing:0}
+  .trust span{font-family:"Vazirmatn",var(--sans)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hdr" id="hdr">
+  <div class="wrap">
+    <a href="#" class="brand fa" aria-label="نوآوران"><span class="brand-mark" aria-hidden="true">ن</span>نوآوران</a>
+    <nav class="nav" aria-label="منوی اصلی">
+      <a href="#products" aria-current="page">کالکشن</a>
+      <a href="#">مدل‌ها</a>
+      <a href="#">راهنمای سایز</a>
+      <a href="#">تماس با ما</a>
+    </nav>
+    <div class="actions">
+      <button class="icon-btn" aria-label="جستجو"><i class="ph ph-magnifying-glass"></i></button>
+      <button class="icon-btn" aria-label="سبد خرید، ۲ مورد"><i class="ph ph-handbag"></i><span class="badge">2</span></button>
+      <a href="#products" class="pill solid fa"><i class="ph ph-sparkle"></i> سفارش اختصاصی</a>
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="باز کردن منو" aria-expanded="false"><i class="ph ph-list"></i></button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-nav" id="mobileNav" aria-label="منوی موبایل">
+  <a href="#products">کالکشن</a><a href="#">مدل‌ها</a><a href="#">راهنمای سایز</a><a href="#">تماس با ما</a>
+</nav>
+
+<main>
+  <section class="hero" id="hero" data-mode="color" aria-label="Hero">
+    <canvas class="layer" id="stage" role="img" aria-label="لباس مجلسی بلند صورتی با آستین حریر و گل‌های سه‌بعدی"></canvas>
+    <noscript><img class="layer" src="hero-dress.jpg" alt="لباس مجلسی بلند صورتی با آستین حریر و گل‌های سه‌بعدی" /></noscript>
+
+    <div class="hero-ui">
+      <div class="wrap">
+        <div class="hero-copy fa">
+          <div class="eyebrow">کالکشن ویژه‌ی لباس مجلسی</div>
+          <h1>شب، از آنِ <em>شماست</em></h1>
+          <p>طراحی و دوخت لباس مجلسی با حریر، گل‌دوزی سه‌بعدی و رنگ دلخواه شما.</p>
+          <div class="ctas"><a href="#products" class="cta">مشاهده‌ی کالکشن <i class="ph ph-arrow-left"></i></a></div>
+          <div class="hint2"><i class="ph ph-cursor"></i> روی لباس حرکت کنید و رنگ‌ها را ببینید</div>
+        </div>
+        <div class="mat-note fa" id="matNote" aria-live="polite">
+          <b>متریال لباس</b>
+          <span>حریر چندلایه با پرده‌ی نرم</span>
+          <span>گل‌های سه‌بعدی روی شانه و کمر</span>
+          <span>بالاتنه‌ی چین‌دار با یقه‌ی قلبی</span>
+        </div>
+        <aside class="designs fa" id="designs" aria-label="طرح‌های لباس">
+          <div class="d-head"><b>طرح‌های لباس</b><span id="dName">حریر گل‌دوزی</span></div>
+          <div class="d-thumbs" role="radiogroup" aria-label="انتخاب طرح لباس">
+            <button class="d-thumb" role="radio" aria-checked="true" data-d="photo"><span class="d-img" style="--a:#fde8ec;--b:#f7d3db"><img src="hero-dress.jpg" alt="" /></span><i>گل‌دوزی</i></button>
+            <button class="d-thumb" role="radio" aria-checked="false" data-d="princess"><span class="d-img" style="--a:#ffe3ec;--b:#f6bfd0"><img src="designs/t-princess.webp" alt="" /></span><i>شاهزاده</i></button>
+            <button class="d-thumb" role="radio" aria-checked="false" data-d="mermaid"><span class="d-img" style="--a:#fbf0d6;--b:#efd9a8"><img src="designs/t-mermaid.webp" alt="" /></span><i>پری دریایی</i></button>
+            <button class="d-thumb" role="radio" aria-checked="false" data-d="boho"><span class="d-img" style="--a:#e6f2e1;--b:#cfe5c9"><img src="designs/t-boho.webp" alt="" /></span><i>بوهو</i></button>
+          </div>
+        </aside>
+        <div class="picker fa">
+          <div class="mono"><span>رنگ و متریال</span><span id="idx" class="fa-num">۱ / ۵</span></div>
+          <div class="opts" role="radiogroup" aria-label="انتخاب رنگ یا نمایش متریال">
+            <button class="opt" role="radio" aria-checked="true" data-v="red">
+              <span class="sw" style="background-image:url('hero-dress-red.jpg')"></span><b>قرمز</b><span class="k">01</span>
+            </button>
+            <button class="opt" role="radio" aria-checked="false" data-v="navy">
+              <span class="sw" style="background-image:url('hero-dress-navy.jpg')"></span><b>سرمه‌ای</b><span class="k">02</span>
+            </button>
+            <button class="opt" role="radio" aria-checked="false" data-v="amber">
+              <span class="sw" style="background-image:url('hero-dress-amber.jpg')"></span><b>کهربایی</b><span class="k">03</span>
+            </button>
+            <button class="opt" role="radio" aria-checked="false" data-v="sky">
+              <span class="sw" style="background-image:url('hero-dress-sky.jpg')"></span><b>آبی آسمانی</b><span class="k">04</span>
+            </button>
+            <button class="opt opt-wide" role="radio" aria-checked="false" data-v="lens">
+              <span class="sw sw-fabric" style="background-image:url('hero-dress.jpg')"></span><b>ذره‌بین متریال</b><span class="k">05</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ring" id="ring"></div>
+  </section>
+
+  <section class="statement fa" aria-labelledby="st-h">
+    <div class="wrap">
+      <svg viewBox="0 0 24 24" role="img" aria-label="لباس مجلسی"><path d="M8.6 1.5h1.2l.5 3.6c.5 1.1 1.2 1.7 1.7 1.7s1.2-.6 1.7-1.7l.5-3.6h1.2l-.5 4.4 1.4 5.1L22 22.5H2L6.9 11l1.4-5.1z"/></svg>
+      <h2 id="st-h">لباس مجلسی که <em>شب شما را خاص‌تر می‌کند</em></h2>
+      <p>از حریر و گیپور تا گل‌دوزی‌های سه‌بعدی، هر لباس با دقت طراحی و دوخته می‌شود تا در مهم‌ترین شب‌تان بدرخشید. سایز یا رنگ دلخواه را پیدا نکردید؟ تماس بگیرید تا طبق سلیقه‌ی شما طراحی کنیم.</p>
+      <div class="trust">
+        <span><i class="ph ph-scissors"></i> دوخت با کیفیت و پارچه‌ی درجه یک</span>
+        <span><i class="ph ph-truck"></i> ارسال به سراسر ایران</span>
+        <span><i class="ph ph-arrows-clockwise"></i> امکان تعویض سایز</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="products fa" id="products" aria-labelledby="pr-h">
+    <div class="wrap">
+      <div class="p-head">
+        <h3 id="pr-h">کالکشن لباس مجلسی<small>رنگ‌های بیشتری هم داریم، برای سفارش رنگ دلخواه تماس بگیرید.</small></h3>
+        <div class="p-nav">
+          <button class="icon-btn" id="pPrev" aria-label="قبلی"><i class="ph ph-arrow-left"></i></button>
+          <span class="count" id="pCount">۱ / ۲</span>
+          <button class="icon-btn" id="pNext" aria-label="بعدی"><i class="ph ph-arrow-right"></i></button>
+        </div>
+      </div>
+      <div class="track" id="track" dir="rtl">
+          <a href="#" class="card" aria-label="لباس مجلسی حریر گل‌دوزی صورتی">
+            <div class="ph-img"><img src="p-pink.webp" alt="لباس مجلسی بلند حریر با گل‌دوزی سه‌بعدی رنگ صورتی" loading="lazy" /><span class="tag">جدید</span></div>
+            <div class="meta"><h4>لباس مجلسی حریر گل‌دوزی<span class="clr">صورتی</span></h4><div class="price">۸٬۵۰۰٬۰۰۰<small>تومان</small></div></div>
+          </a>
+          <a href="#" class="card" aria-label="لباس مجلسی حریر گل‌دوزی قرمز">
+            <div class="ph-img"><img src="p-red.webp" alt="لباس مجلسی بلند حریر با گل‌دوزی سه‌بعدی رنگ قرمز" loading="lazy" /><span class="tag">پرفروش</span></div>
+            <div class="meta"><h4>لباس مجلسی حریر گل‌دوزی<span class="clr">قرمز</span></h4><div class="price">۹٬۲۰۰٬۰۰۰<small>تومان</small></div></div>
+          </a>
+          <a href="#" class="card" aria-label="لباس مجلسی حریر گل‌دوزی سرمه‌ای">
+            <div class="ph-img"><img src="p-navy.webp" alt="لباس مجلسی بلند حریر با گل‌دوزی سه‌بعدی رنگ سرمه‌ای" loading="lazy" /></div>
+            <div class="meta"><h4>لباس مجلسی حریر گل‌دوزی<span class="clr">سرمه‌ای</span></h4><div class="price">۸٬۹۰۰٬۰۰۰<small>تومان</small></div></div>
+          </a>
+          <a href="#" class="card" aria-label="لباس مجلسی حریر گل‌دوزی کهربایی">
+            <div class="ph-img"><img src="p-amber.webp" alt="لباس مجلسی بلند حریر با گل‌دوزی سه‌بعدی رنگ کهربایی" loading="lazy" /><span class="tag">محدود</span></div>
+            <div class="meta"><h4>لباس مجلسی حریر گل‌دوزی<span class="clr">کهربایی</span></h4><div class="price">۹٬۸۰۰٬۰۰۰<small>تومان</small></div></div>
+          </a>
+          <a href="#" class="card" aria-label="لباس مجلسی حریر گل‌دوزی آبی آسمانی">
+            <div class="ph-img"><img src="p-sky.webp" alt="لباس مجلسی بلند حریر با گل‌دوزی سه‌بعدی رنگ آبی آسمانی" loading="lazy" /></div>
+            <div class="meta"><h4>لباس مجلسی حریر گل‌دوزی<span class="clr">آبی آسمانی</span></h4><div class="price">۸٬۷۰۰٬۰۰۰<small>تومان</small></div></div>
+          </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="ftr">
+  <div class="wrap">
+    <div class="ftr-top">
+      <div class="news fa">
+        <h3>اولین نفری باشید که از مدل‌های جدید باخبر می‌شود</h3>
+        <p>مدل‌های تازه، تخفیف‌ها و پیشنهادهای ویژه. ماهی یک ایمیل، نه بیشتر.</p>
+        <form class="field" id="newsForm" novalidate>
+          <input type="email" id="email" dir="auto" placeholder="ایمیل خود را وارد کنید" aria-label="آدرس ایمیل" autocomplete="email" />
+          <button class="pill solid" type="submit">عضویت</button>
+        </form>
+        <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      </div>
+      <div class="col fa"><h4 class="mono">فروشگاه</h4><ul><li><a href="#">مدل‌های جدید</a></li><li><a href="#">لباس مجلسی</a></li><li><a href="#">لباس نامزدی</a></li><li><a href="#">سفارش اختصاصی</a></li></ul></div>
+      <div class="col fa"><h4 class="mono">راهنما</h4><ul><li><a href="#">پیگیری سفارش</a></li><li><a href="#">ارسال</a></li><li><a href="#">تعویض و مرجوعی</a></li><li><a href="#">راهنمای سایز</a></li></ul></div>
+      <div class="col fa"><h4 class="mono">نوآوران</h4>
+        <div class="contact"><span>طراحی و دوخت لباس مجلسی</span></div></div>
+    </div>
+    <div class="wordmark fa" aria-hidden="true">نوآوران</div>
+    <div class="ftr-bot mono">
+      <span class="fa">© ۲۰۲۶ نوآوران. تمام حقوق محفوظ است.</span>
+      <div class="social">
+        <a class="icon-btn" href="#" aria-label="اینستاگرام"><i class="ph ph-instagram-logo"></i></a>
+        <a class="icon-btn" href="#" aria-label="ایکس"><i class="ph ph-x-logo"></i></a>
+        <a class="icon-btn" href="#" aria-label="یوتیوب"><i class="ph ph-youtube-logo"></i></a>
+      </div>
+      <div class="legal fa"><a href="#">حریم خصوصی</a><a href="#">قوانین و مقررات</a><a href="#">کوکی‌ها</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  /* ---------- header ---------- */
+  var hdr = document.getElementById('hdr');
+  function onScroll(){ hdr.classList.toggle('scrolled', scrollY > 24); }
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  var menuBtn = document.getElementById('menuBtn'), mnav = document.getElementById('mobileNav');
+  menuBtn.addEventListener('click', function () {
+    var open = mnav.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open);
+    menuBtn.innerHTML = open ? '<i class="ph ph-x"></i>' : '<i class="ph ph-list"></i>';
+  });
+
+  /* ---------- hero stage: colour spotlight / material lens / skirt sway (canvas) ---------- */
+  var hero = document.getElementById('hero');
+  var stage = document.getElementById('stage');
+  var ctx = stage.getContext('2d');
+  var off = document.createElement('canvas'), octx = off.getContext('2d');
+  var ring = document.getElementById('ring');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var EASE = reduce ? 1 : 0.08;
+
+  var cache = {};
+  function getImg(path){
+    if (!cache[path]){
+      var im = new Image(); im.decoding = 'async';
+      im.onload = function(){ kick(); };
+      im.src = (window.__SRC && window.__SRC[path]) || path;
+      cache[path] = im;
+    }
+    return cache[path];
+  }
+  function ready(im){ return im && im.complete && im.naturalWidth; }
+  var DRESSES = {
+    photo:    { n:'حریر گل‌دوزی', waist:.40, base:'hero-dress.jpg',
+                colors:{ red:'hero-dress-red.jpg', navy:'hero-dress-navy.jpg', amber:'hero-dress-amber.jpg', sky:'hero-dress-sky.jpg' },
+                mat:['حریر چندلایه با پرده‌ی نرم','گل‌های سه‌بعدی روی شانه و کمر','بالاتنه‌ی چین‌دار با یقه‌ی قلبی'] },
+    princess: { n:'شاهزاده', waist:.25, base:'designs/princess.webp',
+                colors:{ red:'designs/princess-red.webp', navy:'designs/princess-navy.webp', amber:'designs/princess-amber.webp', sky:'designs/princess-sky.webp' },
+                mat:['تور پلیسه‌ی چندلایه با دامن پفی','گل‌های ریز برجسته و گلدوزی ظریف','بالاتنه‌ی چین‌دار با یقه‌ی قلبی'] },
+    mermaid:  { n:'پری دریایی', waist:.57, base:'designs/mermaid.webp',
+                colors:{ red:'designs/mermaid-red.webp', navy:'designs/mermaid-navy.webp', amber:'designs/mermaid-amber.webp', sky:'designs/mermaid-sky.webp' },
+                mat:['تور گلدوزی‌شده با گل‌های سه‌بعدی','آستین‌های پفی از حریر با مچ‌بند','دامن زنگوله‌ای از تور چندلایه'] },
+    boho:     { n:'بوهو', waist:.25, base:'designs/boho.webp',
+                colors:{ red:'designs/boho-red.webp', navy:'designs/boho-navy.webp', amber:'designs/boho-amber.webp', sky:'designs/boho-sky.webp' },
+                mat:['گل‌های برجسته روی بالاتنه و آستین','تور پلیسه‌ی سبک با گلدوزی ریز','کمربند ساتن با دنباله‌ی بلند'] }
+  };
+  var dress = 'photo';
+  function baseImg(){ return getImg(DRESSES[dress].base); }
+  function colorImg(v){ return getImg(DRESSES[dress].colors[v]); }
+  var snap = document.createElement('canvas'), sctx = snap.getContext('2d'), swapT = 1;
+  var IW = 1000, IH = 1500;                 // all dress photos share this size
+  var W = 0, H = 0, dpr = 1, sc = 1, dx = 0, dy = 0, dW = 0, dH = 0;
+  var mode = 'red', prevMode = null, fade = 1;
+  var ZOOM = 2.3;                           // material lens magnification
+
+  /* skirt = cloth chain: K nodes from the waist down to the hem */
+  var WAIST = 0.40, NS = 140, K = 14;
+  var nx = new Float64Array(K + 1), nv = new Float64Array(K + 1);
+  var KS = 22, KC = 70, KD = 6;             // anchor spring, neighbour coupling, damping
+  var hovering = false, lean = 0, lastX = null;
+
+  function baseR(){ return Math.max(110, Math.min(innerWidth, innerHeight) * 0.22); }
+  var cur = { x: -1000, y: 300, r: baseR() };
+  var tgt = { x: -1000, y: 300, r: baseR() };
+  var raf = null, last = 0;
+
+  function resize(){
+    var r = stage.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    W = r.width; H = r.height; dpr = Math.min(window.devicePixelRatio || 1, 2);
+    stage.width = off.width = Math.round(W * dpr);
+    stage.height = off.height = Math.round(H * dpr);
+    sc = Math.min(W / IW, H / IH); dW = IW * sc; dH = IH * sc;
+    dx = (W - dW) / 2; dy = (H - dH) / 2;
+    kick();
+  }
+
+  function disp(t){                         // smooth offset along the skirt, t: 0 waist .. 1 hem
+    var f = t * K, i = Math.min(K - 1, Math.floor(f)), u = f - i;
+    u = u * u * (3 - 2 * u);
+    return nx[i] * (1 - u) + nx[i + 1] * u;
+  }
+  function drawDress(c, img){
+    if (!ready(img)) return;
+    c.imageSmoothingQuality = 'high';
+    var wy = WAIST * IH;
+    c.drawImage(img, 0, 0, IW, wy, dx, dy, dW, wy * sc);              // bodice: static
+    var seg = (IH - wy) / NS, ov = 0.8;
+    for (var s = 0; s < NS; s++){                                      // skirt: row strips, shifted by the cloth chain
+      var sy = wy + seg * s, sh = Math.min(seg + ov / sc, IH - sy);
+      c.drawImage(img, 0, sy, IW, sh, dx + disp((s + 0.5) / NS) * dW, dy + sy * sc, dW, sh * sc);
+    }
+  }
+  function inSkirt(x, y){
+    var xn = (x - dx) / dW, yn = (y - dy) / dH;
+    if (yn < WAIST + 0.02 || yn > 1) return false;
+    var t = (yn - WAIST) / (1 - WAIST);
+    return Math.abs(xn - 0.5) < 0.13 + 0.37 * t;
+  }
+
+  function sim(dt, time){                   // returns true while the cloth is still moving
+    if (reduce){ for (var z = 0; z <= K; z++){ nx[z] = 0; nv[z] = 0; } return false; }
+    var steps = 2, h = dt / steps, k, st;
+    for (st = 0; st < steps; st++){
+      for (k = 1; k <= K; k++){
+        var t = k / K;
+        var target = hovering ? lean * Math.pow(t, 1.5) + 0.006 * Math.sin(time * 4 - k * 0.55) * t : 0;
+        var right = k < K ? nx[k + 1] : nx[k];
+        nv[k] += (KS * (target - nx[k]) + KC * (nx[k - 1] + right - 2 * nx[k]) - KD * nv[k]) * h;
+      }
+      for (k = 1; k <= K; k++) nx[k] += nv[k] * h;
+    }
+    var e = hovering;
+    for (k = 1; k <= K; k++) if (Math.abs(nx[k]) > 0.0004 || Math.abs(nv[k]) > 0.01) e = true;
+    return e;
+  }
+
+  function mask(c, x, y, r, hard){
+    c.globalCompositeOperation = 'destination-in';
+    var g = c.createRadialGradient(x, y, 0, x, y, r);
+    if (hard){ g.addColorStop(0, '#000'); g.addColorStop(0.97, '#000'); g.addColorStop(1, 'rgba(0,0,0,0)'); }
+    else {
+      g.addColorStop(0, '#000'); g.addColorStop(0.35, '#000'); g.addColorStop(0.6, 'rgba(0,0,0,.7)');
+      g.addColorStop(0.85, 'rgba(0,0,0,.25)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    }
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    c.globalCompositeOperation = 'source-over';
+  }
+  function colorLayer(){
+    var R = cur.r;
+    if (cur.x < -R || cur.x > W + R || cur.y < -R || cur.y > H + R) return;
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0); octx.globalAlpha = 1; octx.clearRect(0, 0, W, H);
+    var mix = fade < 1 && prevMode;
+    if (mix) drawDress(octx, colorImg(prevMode));
+    octx.globalAlpha = mix ? fade : 1;
+    drawDress(octx, colorImg(mode));
+    octx.globalAlpha = 1;
+    mask(octx, cur.x, cur.y, R, false);
+    ctx.drawImage(off, 0, 0, W, H);
+  }
+  function lensLayer(){
+    var R = cur.r * 0.8;
+    if (cur.x < -R || cur.x > W + R || cur.y < -R || cur.y > H + R) return;
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0); octx.globalAlpha = 1; octx.clearRect(0, 0, W, H);
+    octx.save();
+    octx.translate(cur.x, cur.y); octx.scale(ZOOM, ZOOM); octx.translate(-cur.x, -cur.y);
+    drawDress(octx, baseImg());
+    octx.restore();
+    mask(octx, cur.x, cur.y, R, true);
+    ctx.save();
+    ctx.shadowColor = 'rgba(17,17,17,.28)'; ctx.shadowBlur = 36; ctx.shadowOffsetY = 10;
+    ctx.fillStyle = '#fefefe'; ctx.beginPath(); ctx.arc(cur.x, cur.y, R, 0, 6.2832); ctx.fill();
+    ctx.restore();
+    ctx.drawImage(off, 0, 0, W, H);
+    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(17,17,17,.9)';
+    ctx.beginPath(); ctx.arc(cur.x, cur.y, R, 0, 6.2832); ctx.stroke();
+  }
+  function paint(){
+    if (!W) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    drawDress(ctx, baseImg());
+    if (mode === 'lens') lensLayer(); else colorLayer();
+    if (swapT < 1){                       // old dress fades out over the new one
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = 1 - swapT * swapT * (3 - 2 * swapT);
+      ctx.drawImage(snap, 0, 0); ctx.restore();
+    }
+    ring.style.transform = 'translate(' + (cur.x + stage.offsetLeft) + 'px,' + (cur.y + stage.offsetTop) + 'px)';
+  }
+  function tick(now){
+    var dt = Math.min(0.033, (now - last) / 1000 || 0.016); last = now;
+    cur.x += (tgt.x - cur.x) * EASE;
+    cur.y += (tgt.y - cur.y) * EASE;
+    cur.r += (tgt.r - cur.r) * (reduce ? 1 : 0.12);
+    if (fade < 1) fade = reduce ? 1 : Math.min(1, fade + dt / 0.45);
+    if (swapT < 1 && ready(baseImg())) swapT = reduce ? 1 : Math.min(1, swapT + dt / 0.6);
+    var moving = sim(dt, now / 1000);
+    paint();
+    var still = Math.abs(tgt.x - cur.x) < .2 && Math.abs(tgt.y - cur.y) < .2 && Math.abs(tgt.r - cur.r) < .2;
+    if (still && fade >= 1 && swapT >= 1 && !moving){ raf = null; return; }
+    raf = requestAnimationFrame(tick);
+  }
+  function kick(){ if (!raf){ last = performance.now(); raf = requestAnimationFrame(tick); } }
+
+  function moveTo(cx, cy){
+    var b = stage.getBoundingClientRect(), x = cx - b.left, y = cy - b.top;
+    tgt.x = x; tgt.y = y;
+    ring.style.opacity = mode === 'lens' ? 0 : 1;
+    // skirt sway: lean toward the pointer and kick the cloth with its horizontal speed
+    var was = hovering;
+    hovering = inSkirt(x, y);
+    if (hovering){
+      lean = Math.max(-1, Math.min(1, (x - (dx + dW / 2)) / (dW * 0.5))) * 0.045;
+      if (was && lastX !== null){
+        var mvx = Math.max(-0.025, Math.min(0.025, (x - lastX) / dW));
+        for (var k = 1; k <= K; k++) nv[k] += mvx * 6 * Math.pow(k / K, 1.2);
+      }
+    }
+    lastX = hovering ? x : null;
+    kick();
+  }
+  function leave(cx, cy){
+    var b = stage.getBoundingClientRect(), off2 = baseR() * 2.2;
+    var x = cx - b.left, y = cy - b.top;
+    var d = { l:x, r:b.width - x, t:y, b:b.height - y }, e = 'l';
+    for (var k in d) if (d[k] < d[e]) e = k;
+    tgt.x = e === 'l' ? -off2 : e === 'r' ? b.width + off2 : x;
+    tgt.y = e === 't' ? -off2 : e === 'b' ? b.height + off2 : y;
+    hovering = false; lastX = null;
+    ring.style.opacity = 0; kick();
+  }
+  hero.addEventListener('mousemove', function(e){
+    if (e.target.closest && e.target.closest('.picker, .cta, .designs, .designs-fab, .d-scrim')){ ring.style.opacity = 0; hovering = false; lastX = null; kick(); return; }
+    moveTo(e.clientX, e.clientY);
+  });
+  hero.addEventListener('mouseleave', function(e){ leave(e.clientX, e.clientY); });
+  hero.addEventListener('touchmove', function(e){ if (e.target.closest && e.target.closest('.designs, .designs-fab, .d-scrim')) return; var t = e.touches[0]; moveTo(t.clientX, t.clientY); }, { passive: true });
+  hero.addEventListener('touchend', function(){ leave(-9999, cur.y); });
+  document.querySelector('.picker').addEventListener('mouseenter', function(){ ring.style.opacity = 0; });
+  addEventListener('resize', function(){ tgt.r = baseR(); resize(); });
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+  resize();
+
+  /* ---------- colour / material picker ---------- */
+  var opts = [].slice.call(document.querySelectorAll('.opt'));
+  var idxEl = document.getElementById('idx');
+  var faD = function(n){ return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'[d]; }); };
+  function select(v){
+    var swap = v !== mode && mode !== 'lens' && v !== 'lens';
+    prevMode = swap ? mode : null; fade = swap ? 0 : 1; mode = v;
+    opts.forEach(function(o, i){
+      var on = o.dataset.v === v;
+      o.setAttribute('aria-checked', on);
+      if (on) idxEl.textContent = faD(i + 1) + ' / ' + faD(opts.length);
+    });
+    hero.dataset.mode = v === 'lens' ? 'lens' : 'color';
+    if (v === 'lens') ring.style.opacity = 0;
+    cur.r = baseR() * 0.6; tgt.r = baseR(); kick();   // small "breath" on switch
+  }
+  opts.forEach(function(o){ o.addEventListener('click', function(){ select(o.dataset.v); }); });
+  addEventListener('keydown', function(e){
+    if (e.target.tagName === 'INPUT') return;
+    var i = parseInt(e.key, 10);
+    if (i >= 1 && i <= opts.length) select(opts[i - 1].dataset.v);
+  });
+
+  /* ---------- dress / design selector ---------- */
+  var dThumbs = [].slice.call(document.querySelectorAll('.d-thumb'));
+  var dNameEl = document.getElementById('dName'), matNote = document.getElementById('matNote');
+  function setDress(k){
+    if (k === dress || !DRESSES[k]) return;
+    snap.width = stage.width; snap.height = stage.height;
+    sctx.setTransform(1, 0, 0, 1, 0, 0); sctx.drawImage(stage, 0, 0);   // keep the current picture to fade out
+    swapT = 0; dress = k; WAIST = DRESSES[k].waist; prevMode = null; fade = 1;
+    for (var i = 0; i <= K; i++){ nx[i] = 0; nv[i] = 0; }
+    hovering = false; lastX = null;
+    getImg(DRESSES[k].base);
+    for (var c in DRESSES[k].colors) getImg(DRESSES[k].colors[c]);
+    dThumbs.forEach(function(t){ t.setAttribute('aria-checked', t.dataset.d === k); });
+    dNameEl.textContent = DRESSES[k].n;
+    stage.setAttribute('aria-label', 'لباس مجلسی طرح ' + DRESSES[k].n);
+    matNote.innerHTML = '<b>متریال لباس</b>' + DRESSES[k].mat.map(function(l){ return '<span>' + l + '</span>'; }).join('');
+    cur.r = baseR() * 0.6; tgt.r = baseR();                              // small "breath" like the colour switch
+    kick();
+  }
+  dThumbs.forEach(function(t){ t.addEventListener('click', function(){ setDress(t.dataset.d); }); });
+  addEventListener('load', function(){ setTimeout(function(){ for (var k in DRESSES) getImg(DRESSES[k].base); }, 900); });
+  getImg(DRESSES.photo.base); getImg(DRESSES.photo.colors.red);
+
+  /* ---------- product slider (RTL, 3 per slide) ---------- */
+  var track = document.getElementById('track'), pPrev = document.getElementById('pPrev'), pNext = document.getElementById('pNext'), pCount = document.getElementById('pCount');
+  var fa = function(n){ return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'[d]; }); };
+  function step(){ return track.clientWidth + parseFloat(getComputedStyle(track).columnGap || 0); }
+  function pages(){ return Math.max(1, Math.round((track.scrollWidth + parseFloat(getComputedStyle(track).columnGap || 0)) / step())); }
+  function pos(){ return Math.abs(track.scrollLeft); }   // RTL scrollLeft is negative in modern browsers
+  function update(){
+    var max = track.scrollWidth - track.clientWidth;
+    var page = Math.min(pages(), Math.round(pos() / step()) + 1);
+    if (pos() >= max - 2) page = pages();
+    pCount.textContent = fa(page) + ' / ' + fa(pages());
+    pPrev.disabled = pos() < 2;
+    pNext.disabled = pos() >= max - 2;
+  }
+  // in RTL, "next" items sit to the left
+  pNext.addEventListener('click', function(){ track.scrollBy({ left: -step() }); });
+  pPrev.addEventListener('click', function(){ track.scrollBy({ left:  step() }); });
+  track.addEventListener('scroll', function(){ requestAnimationFrame(update); }, { passive: true });
+  addEventListener('resize', update);
+  update();
+
+  /* ---------- newsletter states ---------- */
+  var form = document.getElementById('newsForm'), email = document.getElementById('email'), msg = document.getElementById('msg');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
+    form.classList.toggle('err', !ok);
+    msg.className = 'msg ' + (ok ? 'ok' : 'err');
+    msg.textContent = ok ? "عضو شدید. مدل‌های جدید را برایتان می‌فرستیم." : 'ایمیل درست به نظر نمی‌رسد. دوباره امتحان کنید.';
+    if (ok) email.value = '';
+  });
+  email.addEventListener('input', function(){ form.classList.remove('err'); if (msg.classList.contains('err')) { msg.textContent=''; msg.className='msg'; } });
+})();
+</script>
+</body>
+</html>
